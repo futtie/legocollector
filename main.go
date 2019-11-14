@@ -57,9 +57,11 @@ func homeView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprintf(w, HTMLSetListHeader)
+	fmt.Fprintf(w, HTMLPageHeader)
+	fmt.Fprintf(w, HTMLSetListFormHeader)
 	fmt.Fprintf(w, HTMLSetListItemHeader)
 	for _, item := range setList {
-		fmt.Fprintf(w, HTMLSetListitem, item.ID, item.ID, item.Name, "", item.Description)
+		fmt.Fprintf(w, HTMLSetListitem, item.ID, item.ID, item.Name, item.ID, item.Name, item.Description)
 	}
 	fmt.Fprintf(w, HTMLSetListFooter)
 }
@@ -76,6 +78,8 @@ func singleSetView(w http.ResponseWriter, r *http.Request) {
 
 	if id > 0 {
 		fmt.Fprintf(w, HTMLPartListHeader, id)
+		fmt.Fprintf(w, HTMLPageHeader)
+		fmt.Fprintf(w, HTMLPartListFormHeader)
 		fmt.Fprintf(w, HTMLPartListItemHeader)
 		setParts, err := getPartList(id)
 		if err != nil {
@@ -101,16 +105,21 @@ func viewImage(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	ID := query.Get("id")
+	imageType := query.Get("type")
 
-	colorstr := query.Get("color")
-	color, err := strconv.Atoi(colorstr)
-	if err != nil {
-		fmt.Fprintf(w, "Can't get part color, %s", err.Error())
-		return
+	var imagePath string
+	if imageType == "p" {
+		colorstr := query.Get("color")
+		color, err := strconv.Atoi(colorstr)
+		if err != nil {
+			fmt.Fprintf(w, "Can't get part color, %s", err.Error())
+			return
+		}
+		imagePath = localPartImageStorage + ID + "-" + strconv.Itoa(color) + ".png"
+	} else {
+		imagePath = localSetImageStorage + ID + ".png"
 	}
 
-	imagePath := localPartImageStorage + ID + "-" + strconv.Itoa(color) + ".png"
-	fmt.Println(imagePath)
 	http.ServeFile(w, r, imagePath)
 }
 
@@ -137,7 +146,9 @@ func createDatabaseView(w http.ResponseWriter, r *http.Request) {
 func addSetView(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("method: %s\n", r.Method)
 	if r.Method == "GET" {
-		fmt.Fprintf(w, HTMLAddSet)
+		fmt.Fprintf(w, HTMLAddSetHeader)
+		fmt.Fprintf(w, HTMLPageHeader)
+		fmt.Fprintf(w, HTMLAddSetFooter)
 	} else if r.Method == "POST" {
 		err := r.ParseMultipartForm(1000000)
 		if err != nil {
@@ -145,7 +156,7 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		file, handler, err := r.FormFile("setfilename")
+		file, _, err := r.FormFile("setfilename")
 		if err != nil {
 			fmt.Println("Error retrieving the file")
 			fmt.Println(err)
@@ -153,17 +164,17 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		fmt.Printf("Uploaded file: %v", handler.Filename)
-		fmt.Printf("File size: %v", handler.Size)
-		fmt.Printf("MIME header: %v", handler.Header)
+		//fmt.Printf("Uploaded file: %v", handler.Filename)
+		//fmt.Printf("File size: %v", handler.Size)
+		//fmt.Printf("MIME header: %v", handler.Header)
 
 		setName := r.FormValue("setname")
 		setDescription := r.FormValue("setdescription")
 		setImageURL := r.FormValue("setimageurl")
 
-		fmt.Printf("name: %s\n", setName)
-		fmt.Printf("description: %s\n", setDescription)
-		fmt.Printf("url: %s\n", setImageURL)
+		//fmt.Printf("name: %s\n", setName)
+		//fmt.Printf("description: %s\n", setDescription)
+		//fmt.Printf("url: %s\n", setImageURL)
 
 		var legoset LegoSet
 		legoset.Name = setName
@@ -176,7 +187,7 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 		inventory := decodeSet(content)
 		// save items
 		var legoParts []LegoPart
-		for ix, item := range inventory.Items {
+		for _, item := range inventory.Items {
 			// retrieve part info: description and image
 			description, _ := getPartImageAndDescription(item.ItemID, item.Color)
 			var legoPart LegoPart
@@ -187,7 +198,7 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 			legoPart.RequiredQty = item.MinQty
 			legoPart.FoundQty = 0
 			legoParts = append(legoParts, legoPart)
-			fmt.Printf("%d: %v", ix, item)
+			//fmt.Printf("%d: %v", ix, item)
 		}
 		saveParts(legoParts)
 	}
@@ -219,7 +230,7 @@ func modifyCount(w http.ResponseWriter, r *http.Request) {
 }
 
 func addColorList(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("method: %s\n", r.Method)
+	//fmt.Printf("method: %s\n", r.Method)
 	if r.Method == "GET" {
 		fmt.Fprintf(w, HTMLSetColorList)
 	} else if r.Method == "POST" {
@@ -229,7 +240,7 @@ func addColorList(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		file, handler, err := r.FormFile("colorfilename")
+		file, _, err := r.FormFile("colorfilename")
 		if err != nil {
 			fmt.Println("Error retrieving the file")
 			fmt.Println(err)
@@ -237,9 +248,9 @@ func addColorList(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		fmt.Printf("Uploaded file: %v", handler.Filename)
-		fmt.Printf("File size: %v", handler.Size)
-		fmt.Printf("MIME header: %v", handler.Header)
+		//fmt.Printf("Uploaded file: %v", handler.Filename)
+		//fmt.Printf("File size: %v", handler.Size)
+		//fmt.Printf("MIME header: %v", handler.Header)
 
 		// decode file
 		content, err := ioutil.ReadAll(file)

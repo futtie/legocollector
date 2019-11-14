@@ -1,21 +1,42 @@
 package main
 
+// HTMLPageHeader ...
+const HTMLPageHeader = `
+	<table>
+		<tbody>
+			<tr>
+				<td><a href="/">Sætliste</a></td>
+				<td><a href="/addset">Tilføj sæt</a></td>
+			</tr>
+		</tbody>
+	</table>
+`
+
 // HTMLSetListHeader ...
 const HTMLSetListHeader = `<html>
 <head>
 	<title>Setlist</title>
 </head>	
 <body>
+`
+
+// HTMLSetListFormHeader ...
+const HTMLSetListFormHeader = ` 
 	<form enctype="multipart/form-data" action="/addset" method="post">
 		<table>
+			<colgroup>
+				<col style="background-color:#efefef">
+				<col style="background-color:white">
+				<col style="background-color:#efefef">
+			</colgroup>
 			<tbody>
 `
 
 // HTMLSetListItemHeader ...
 const HTMLSetListItemHeader = `
 				<tr>
-					<td>Set</td>
-					<td>Image</td>
+					<td width="10%%">Set</td>
+					<td width="40%%">Image</td>
 					<td>Description</td>
 				</tr>
 `
@@ -24,7 +45,7 @@ const HTMLSetListItemHeader = `
 const HTMLSetListitem = `
 				<tr id="%d">
 					<td><a href="/viewset?id=%d">%s</a></td>
-					<td>%s</td>
+					<td><img src="/viewimage?id=%d&type=s" alt="%s" width="100%%"></td>
 					<td>%s</td>
 				</tr>
 `
@@ -68,6 +89,10 @@ const HTMLPartListHeader = `<html>
 	</script>
 </head>	
 <body>
+`
+
+// HTMLPartListFormHeader ...
+const HTMLPartListFormHeader = `
 	<form enctype="multipart/form-data" action="/addset" method="post">
 		<table>
 			<colgroup>
@@ -99,7 +124,7 @@ const HTMLPartListItemHeader = `
 const HTMLPartListItem = `
 				<tr id="tr-%s-%d">
 					<td>%s</td>
-					<td><img src="/viewimage?id=%s&color=%d" alt="%s" width="90%%"></td>
+					<td><img src="/viewimage?id=%s&type=p&color=%d" alt="%s" width="90%%"></td>
 					<td><h3 id="req-%s-%d" align=center>%d</h3></td>
 					<td><h3 id="found-%s-%d" align=center>%d</h3></td>
 					<td>
@@ -120,12 +145,16 @@ const HTMLPartListFooter = `
 </html>
 `
 
-// HTMLAddSet ...
-const HTMLAddSet = `<html>
+// HTMLAddSetHeader ...
+const HTMLAddSetHeader = `<html>
 	<head>
 		<title>Add set</title>
 	</head>	
 	<body>
+`
+
+// HTMLAddSetFooter ...
+const HTMLAddSetFooter = `
 		<form enctype="multipart/form-data" action="/addset" method="post">
 			<table>
 				<tbody>

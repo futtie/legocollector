@@ -22,7 +22,7 @@ const HTMLSetListItemHeader = `
 
 // HTMLSetListitem ...
 const HTMLSetListitem = `
-				<tr>
+				<tr id="%d">
 					<td><a href="/viewset?id=%d">%s</a></td>
 					<td>%s</td>
 					<td>%s</td>
@@ -58,6 +58,10 @@ const HTMLPartListHeader = `<html>
 				},
 				success : function(data) {
 					$(foundtag).text(data);
+					var reqtag = '#req'.concat(partnumbercolor)
+					var reqcount = $(reqtag).text()
+					if (data === reqcount)
+						$('#tr'.concat(partnumbercolor)).hide();
 				},
 			});
 		};
@@ -66,6 +70,15 @@ const HTMLPartListHeader = `<html>
 <body>
 	<form enctype="multipart/form-data" action="/addset" method="post">
 		<table>
+			<colgroup>
+				<col style="background-color:#efefef">
+				<col style="background-color:white">
+				<col style="background-color:#efefef">
+				<col style="background-color:white">
+				<col style="background-color:#efefef">
+				<col style="background-color:white">
+				<col style="background-color:#efefef">
+	  		</colgroup>
 			<tbody>
 `
 
@@ -73,7 +86,7 @@ const HTMLPartListHeader = `<html>
 const HTMLPartListItemHeader = `
 				<tr>
 					<td>Del</td>
-					<td width="20%%">Billede</td>
+					<td width="15%%">Billede</td>
 					<td>Antal nødvendig</td>
 					<td>Antal fundet</td>
 					<td>Fortryd / Fundet</td>
@@ -84,14 +97,14 @@ const HTMLPartListItemHeader = `
 
 // HTMLPartListItem ...
 const HTMLPartListItem = `
-				<tr>
+				<tr id="tr-%s-%d">
 					<td>%s</td>
-					<td><img src="/viewimage?id=%s&color=%d" alt="%s" width="100%%"></td>
-					<td><h3>%d</h3></td>
-					<td><h3 id="found-%s-%d">%d</h3></td>
+					<td><img src="/viewimage?id=%s&color=%d" alt="%s" width="90%%"></td>
+					<td><h3 id="req-%s-%d" align=center>%d</h3></td>
+					<td><h3 id="found-%s-%d" align=center>%d</h3></td>
 					<td>
-						<img id="up-%s-%d" onclick="postdata(this)" src="/geticon?name=up1.png" width="50px" height="50px"/>
 						<img id="down-%s-%d" onclick="postdata(this)" src="/geticon?name=down1.png" width="50px" height="50px"/>
+						<img id="up-%s-%d" onclick="postdata(this)" src="/geticon?name=up1.png" width="50px" height="50px"/>
 					</td>
 					<td>%s</td>
 					<td>%s</td>

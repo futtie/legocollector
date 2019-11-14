@@ -59,7 +59,7 @@ func homeView(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, HTMLSetListHeader)
 	fmt.Fprintf(w, HTMLSetListItemHeader)
 	for _, item := range setList {
-		fmt.Fprintf(w, HTMLSetListitem, item.ID, item.Name, "", item.Description)
+		fmt.Fprintf(w, HTMLSetListitem, item.ID, item.ID, item.Name, "", item.Description)
 	}
 	fmt.Fprintf(w, HTMLSetListFooter)
 }
@@ -92,7 +92,7 @@ func singleSetView(w http.ResponseWriter, r *http.Request) {
 				colorName = "ingen"
 			}
 			//colorName := From(legoColors).Where(func(c LegoColor) bool { return c.Number == part.ColorID }).Select(func(c LegoColor) string { return c.Name }).First()
-			fmt.Fprintf(w, HTMLPartListItem, part.Partnumber, part.Partnumber, part.ColorID, part.Partnumber, part.RequiredQty, part.Partnumber, part.ColorID, part.FoundQty, part.Partnumber, part.ColorID, part.Partnumber, part.ColorID, colorName, part.Description)
+			fmt.Fprintf(w, HTMLPartListItem, part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.RequiredQty, part.Partnumber, part.ColorID, part.FoundQty, part.Partnumber, part.ColorID, part.Partnumber, part.ColorID, colorName, part.Description)
 		}
 	}
 }

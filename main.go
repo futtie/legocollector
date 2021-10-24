@@ -144,7 +144,6 @@ func createDatabaseView(w http.ResponseWriter, r *http.Request) {
 }
 
 func addSetView(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("method: %s\n", r.Method)
 	if r.Method == "GET" {
 		fmt.Fprintf(w, HTMLAddSetHeader)
 		fmt.Fprintf(w, HTMLPageHeader)
@@ -164,17 +163,9 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		//fmt.Printf("Uploaded file: %v", handler.Filename)
-		//fmt.Printf("File size: %v", handler.Size)
-		//fmt.Printf("MIME header: %v", handler.Header)
-
 		setName := r.FormValue("setname")
 		setDescription := r.FormValue("setdescription")
 		setImageURL := r.FormValue("setimageurl")
-
-		//fmt.Printf("name: %s\n", setName)
-		//fmt.Printf("description: %s\n", setDescription)
-		//fmt.Printf("url: %s\n", setImageURL)
 
 		var legoset LegoSet
 		legoset.Name = setName
@@ -198,7 +189,6 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 			legoPart.RequiredQty = item.MinQty
 			legoPart.FoundQty = 0
 			legoParts = append(legoParts, legoPart)
-			//fmt.Printf("%d: %v", ix, item)
 		}
 		saveParts(legoParts)
 	}
@@ -230,7 +220,6 @@ func modifyCount(w http.ResponseWriter, r *http.Request) {
 }
 
 func addColorList(w http.ResponseWriter, r *http.Request) {
-	//fmt.Printf("method: %s\n", r.Method)
 	if r.Method == "GET" {
 		fmt.Fprintf(w, HTMLSetColorList)
 	} else if r.Method == "POST" {
@@ -248,21 +237,16 @@ func addColorList(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		//fmt.Printf("Uploaded file: %v", handler.Filename)
-		//fmt.Printf("File size: %v", handler.Size)
-		//fmt.Printf("MIME header: %v", handler.Header)
-
 		// decode file
 		content, err := ioutil.ReadAll(file)
 		colors := decodeColors(content)
 		// save items
 		var legoColors []LegoColor
-		for ix, item := range colors.Items {
+		for _, item := range colors.Items {
 			var legoColor LegoColor
 			legoColor.Number = item.Color
 			legoColor.Name = item.ColorName
 			legoColors = append(legoColors, legoColor)
-			fmt.Printf("%d: %v", ix, item)
 		}
 		saveColors(legoColors)
 		fmt.Fprintf(w, "done")

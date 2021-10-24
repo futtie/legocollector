@@ -12,5 +12,7 @@
 *.out
 
 # Images dynamically fetched when running
-images/parts/*
-images/sets/*
+images/*
+#images/sets/*
+LegoCollector
+__debug_bin

@@ -8,7 +8,7 @@ import (
 )
 
 func dbConn() (db *sql.DB) {
-	db, err := sql.Open("mysql", "legouser:legopassword@/legoparts")
+	db, err := sql.Open("mysql", "legouser:legopassword@dbserver/legoparts")
 	if err != nil {
 		panic(err.Error())
 	}

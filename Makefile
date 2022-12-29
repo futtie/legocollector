@@ -8,6 +8,9 @@ TAG := 0.1
 build: 
 	docker build --no-cache -t ${REPOSITORY}:local -f Dockerfile .
 
+build_local: 
+	docker build --no-cache -f Dockerfile .
+
 #build: docker_login
 #	docker build --no-cache 
 #	  -t ${REGISTRY}/${REPOSITORY}:${TAG} \

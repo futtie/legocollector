@@ -1,19 +1,25 @@
 version: '3.7'
 services:
-  web:
+  legocollector:
     container_name: legocollector
     image: futtie/legocollector:local
     ports:
       - 8080:8080
-  db:
+    networks:
+        - legonet
+  dbserver:
     container_name: dbserver
-    image: percona:latest
+    image: mysql:latest
     ports:
       - 3306:3306
     environment:
-	  - MYSQL_ROOT_PASSWORD=Password1! 
-	  - MYSQL_USER=legouser 
-	  - MYSQL_PASSWORD=legopassword 
-	  - MYSQL_DATABASE=legoparts
+      - MYSQL_ROOT_PASSWORD=Password1! 
+      - MYSQL_USER=legouser 
+      - MYSQL_PASSWORD=legopassword 
+      - MYSQL_DATABASE=legoparts
     volumes:
-    - /home/futtie/mysql/data/:/var/lib/mysql/
+      - /home/futtie/mysql/data/:/var/lib/mysql/
+    networks:
+        - legonet
+networks:
+    legonet:

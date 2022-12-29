@@ -12,4 +12,5 @@ RUN go build -a -installsuffix cgo -o legocollector .
 
 FROM scratch
 COPY --from=builder /app/legocollector /legocollector
+COPY --from=builder /app/buttons /buttons
 ENTRYPOINT ["/legocollector"]

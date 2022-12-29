@@ -255,4 +255,39 @@ func addColorList(w http.ResponseWriter, r *http.Request) {
 }
 
 func testView(w http.ResponseWriter, r *http.Request) {
+    fmt.Printf("root")
+    files, err := ioutil.ReadDir("/")
+    if err != nil {
+        log.Fatal(err)
+    }
+    for _, file := range files {
+        fmt.Println(file.Name(), file.IsDir())
+    }
+
+    fmt.Printf(localIconStorage)
+    files, err = ioutil.ReadDir(localIconStorage)
+    if err != nil {
+        log.Fatal(err)
+    }
+    for _, file := range files {
+        fmt.Println(file.Name(), file.IsDir())
+    }
+    
+    fmt.Printf(localSetImageStorage)
+    files, err = ioutil.ReadDir(localSetImageStorage)
+    if err != nil {
+        log.Fatal(err)
+    }
+    for _, file := range files {
+        fmt.Println(file.Name(), file.IsDir())
+    }
+    
+    fmt.Printf(localPartImageStorage)
+    files, err = ioutil.ReadDir(localPartImageStorage)
+    if err != nil {
+        log.Fatal(err)
+    }
+    for _, file := range files {
+        fmt.Println(file.Name(), file.IsDir())
+    }
 }

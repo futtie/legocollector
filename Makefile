@@ -9,14 +9,13 @@ build:
 	docker build --no-cache -t ${REPOSITORY}:local -f Dockerfile .
 
 build_local: 
-	docker build --no-cache -f Dockerfile .
+	docker build -f Dockerfile .
 
 #build: docker_login
 #	docker build --no-cache 
 #	  -t ${REGISTRY}/${REPOSITORY}:${TAG} \
 #	  -t ${REPOSITORY}:local -f Dockerfile \
-#	  .
-
+#         .
 lint:
 	docker run --rm -v "${PWD}":/app golang:1.13 sh -c "cd /app && go get golang.org/x/lint/golint && golint -set_exit_status ./..."
 

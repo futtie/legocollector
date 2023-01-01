@@ -5,8 +5,10 @@ services:
     image: futtie/legocollector:local
     ports:
       - 8080:8080
+    volumes:
+      - /home/mhe/docker/legocollector/files/:/files/
     networks:
-        - legonet
+        - bridge 
   dbserver:
     container_name: dbserver
     image: mysql:latest
@@ -18,8 +20,9 @@ services:
       - MYSQL_PASSWORD=legopassword 
       - MYSQL_DATABASE=legoparts
     volumes:
-      - /home/futtie/mysql/data/:/var/lib/mysql/
+      - /home/mhe/docker/mysql/data/:/var/lib/mysql/
     networks:
-        - legonet
+        - bridge
 networks:
-    legonet:
+    bridge:
+        external: true      

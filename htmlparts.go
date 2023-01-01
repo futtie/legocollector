@@ -15,6 +15,8 @@ const HTMLPageHeader = `
 // HTMLSetListHeader ...
 const HTMLSetListHeader = `<html>
 <head>
+        <link rel="stylesheet" href="/style?file=styles"> 
+        <link rel="stylesheet" href="/style?file=stylesetlist">
 	<title>Setlist</title>
 </head>	
 <body>
@@ -62,6 +64,8 @@ const HTMLSetListFooter = `
 // HTMLPartListHeader ...
 const HTMLPartListHeader = `<html>
 <head>
+        <link rel="stylesheet" href="/style?file=styles">
+        <link rel="stylesheet" href="/style?file=stylepartlist">
 	<title>Partlist</title>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 	<script>
@@ -129,7 +133,7 @@ const HTMLPartListItem = `
 					<td><h3 id="found-%s-%d" align=center>%d</h3></td>
 					<td>
 						<img id="down-%s-%d" onclick="postdata(this)" src="/geticon?name=down1.png" width="50px" height="50px"/>
-						<img id="up-%s-%d" onclick="postdata(this)" src="/geticon?name=up1.png" width="50px" height="50px"/>
+						<img id="up-%s-%d" onclick="postdata(this)" src="/geticon?name=up1.png" width="20px" height="20px"/>
 					</td>
 					<td>%s</td>
 					<td>%s</td>
@@ -148,6 +152,8 @@ const HTMLPartListFooter = `
 // HTMLAddSetHeader ...
 const HTMLAddSetHeader = `<html>
 	<head>
+	        <link rel="stylesheet" href="/style?file=styles">
+                <link rel="stylesheet" href="/style?file=styleaddset">
 		<title>Add set</title>
 	</head>	
 	<body>
@@ -188,6 +194,8 @@ const HTMLAddSetFooter = `
 // HTMLCreateDatabaseHeader ...
 const HTMLCreateDatabaseHeader = `<html>
 	<head>
+                <link rel="stylesheet" href="/style?file=styles">
+                <link rel="stylesheet" href="/style?file=stylecreatedb">
 		<title>Create database</title>
 	</head>
 	<body>
@@ -202,6 +210,8 @@ const HTMLCreateDatabaseFooter = `
 // HTMLSetColorList ...
 const HTMLSetColorList = `<html>
 	<head>
+                <link rel="stylesheet" href="/style?file=styles">
+                <link rel="stylesheet" href="/style?file=stylecolorlist">
 		<title>Set color list</title>
 	</head>	
 	<body>

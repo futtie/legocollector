@@ -12,9 +12,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const localPartImageStorage = "./images/parts/"
-const localSetImageStorage = "./images/sets/"
-const localIconStorage = "./buttons/"
+const localPartImageStorage = "/files/parts/"
+const localSetImageStorage = "/files/sets/"
+const localIconStorage = "/files/buttons/"
+const filesRoot = "/files/"
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
@@ -27,6 +28,7 @@ func main() {
 	router.HandleFunc("/modifycount", modifyCount)
 	router.HandleFunc("/addcolorlist", addColorList)
 	router.HandleFunc("/test", testView)
+	router.HandleFunc("/style", cssView)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
@@ -254,8 +256,14 @@ func addColorList(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "something happened...")
 }
 
+func cssView(w http.ResponseWriter, r *http.Request) {
+    filename := r.URL.Query().Get("file")
+    cssFile := filesRoot + filename + ".css"
+    http.ServeFile(w, r, cssFile)
+}
+
 func testView(w http.ResponseWriter, r *http.Request) {
-    fmt.Printf("root")
+    fmt.Printf("Dir: root")
     files, err := ioutil.ReadDir("/")
     if err != nil {
         log.Fatal(err)
@@ -264,7 +272,7 @@ func testView(w http.ResponseWriter, r *http.Request) {
         fmt.Println(file.Name(), file.IsDir())
     }
 
-    fmt.Printf(localIconStorage)
+    fmt.Printf("Dir: %s", localIconStorage)
     files, err = ioutil.ReadDir(localIconStorage)
     if err != nil {
         log.Fatal(err)
@@ -273,7 +281,7 @@ func testView(w http.ResponseWriter, r *http.Request) {
         fmt.Println(file.Name(), file.IsDir())
     }
     
-    fmt.Printf(localSetImageStorage)
+    fmt.Printf("Dir: %s", localSetImageStorage)
     files, err = ioutil.ReadDir(localSetImageStorage)
     if err != nil {
         log.Fatal(err)
@@ -282,7 +290,7 @@ func testView(w http.ResponseWriter, r *http.Request) {
         fmt.Println(file.Name(), file.IsDir())
     }
     
-    fmt.Printf(localPartImageStorage)
+    fmt.Printf("Dir: %s", localPartImageStorage)
     files, err = ioutil.ReadDir(localPartImageStorage)
     if err != nil {
         log.Fatal(err)

@@ -6,11 +6,8 @@ ENV GO111MODULE=on
 WORKDIR /app
 COPY . /app
 RUN go build -a -installsuffix cgo -o legocollector .
-# RUN go get github.com/go-swagger/go-swagger/cmd/swagger@0.16.0
-# RUN swagger generate spec -o /app/swagger.json
-# RUN sed -i 's/@bamboo.buildNumber/${bamboo.buildNumber}/g' /app/swagger.json
 
 FROM scratch
 COPY --from=builder /app/legocollector /legocollector
-COPY --from=builder /app/buttons /buttons
+COPY --from=builder /app/files/ /files/
 ENTRYPOINT ["/legocollector"]

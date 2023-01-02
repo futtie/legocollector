@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 
@@ -15,7 +16,8 @@ import (
 const localPartImageStorage = "/files/parts/"
 const localSetImageStorage = "/files/sets/"
 const localIconStorage = "/files/buttons/"
-const filesRoot = "/files/"
+const cssFilesRoot = "/files/css/"
+const htmlFilesRoot = "/files/html/"
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
@@ -27,7 +29,7 @@ func main() {
 	router.HandleFunc("/geticon", getIcon)
 	router.HandleFunc("/modifycount", modifyCount)
 	router.HandleFunc("/addcolorlist", addColorList)
-	router.HandleFunc("/test", testView)
+	router.HandleFunc("/ping", pingView)
 	router.HandleFunc("/style", cssView)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
@@ -58,14 +60,11 @@ func homeView(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, err.Error())
 		return
 	}
-	fmt.Fprintf(w, HTMLSetListHeader)
-	fmt.Fprintf(w, HTMLPageHeader)
-	fmt.Fprintf(w, HTMLSetListFormHeader)
-	fmt.Fprintf(w, HTMLSetListItemHeader)
+	fmt.Fprintf(w, getHtmlFileContents("setlistheader"))
 	for _, item := range setList {
-		fmt.Fprintf(w, HTMLSetListitem, item.ID, item.ID, item.Name, item.ID, item.Name, item.Description)
+		fmt.Fprintf(w, getHtmlFileContents("setlistitem"), item.ID, item.ID, item.Name, item.ID, item.Name, item.Description)
 	}
-	fmt.Fprintf(w, HTMLSetListFooter)
+	fmt.Fprintf(w, getHtmlFileContents("setlistformfooter"))
 }
 
 func singleSetView(w http.ResponseWriter, r *http.Request) {
@@ -79,10 +78,7 @@ func singleSetView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if id > 0 {
-		fmt.Fprintf(w, HTMLPartListHeader, id)
-		fmt.Fprintf(w, HTMLPageHeader)
-		fmt.Fprintf(w, HTMLPartListFormHeader)
-		fmt.Fprintf(w, HTMLPartListItemHeader)
+		fmt.Fprintf(w, getHtmlFileContents("partlistheader"), id)
 		setParts, err := getPartList(id)
 		if err != nil {
 			fmt.Fprintf(w, "Can't find set, %s", err.Error())
@@ -98,7 +94,7 @@ func singleSetView(w http.ResponseWriter, r *http.Request) {
 				colorName = "ingen"
 			}
 			//colorName := From(legoColors).Where(func(c LegoColor) bool { return c.Number == part.ColorID }).Select(func(c LegoColor) string { return c.Name }).First()
-			fmt.Fprintf(w, HTMLPartListItem, part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.RequiredQty, part.Partnumber, part.ColorID, part.FoundQty, part.Partnumber, part.ColorID, part.Partnumber, part.ColorID, colorName, part.Description)
+			fmt.Fprintf(w, getHtmlFileContents("partlistitem"), part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.RequiredQty, part.Partnumber, part.ColorID, part.FoundQty, part.Partnumber, part.ColorID, part.Partnumber, part.ColorID, colorName, part.Description)
 		}
 	}
 }
@@ -122,7 +118,12 @@ func viewImage(w http.ResponseWriter, r *http.Request) {
 		imagePath = localSetImageStorage + ID + ".png"
 	}
 
-	http.ServeFile(w, r, imagePath)
+	if _, err := os.Stat(imagePath); err == nil {
+		http.ServeFile(w, r, imagePath)
+	} else {
+		imagePath = localSetImageStorage + "na.png"
+		http.ServeFile(w, r, imagePath)
+	}
 }
 
 func getIcon(w http.ResponseWriter, r *http.Request) {
@@ -135,21 +136,19 @@ func getIcon(w http.ResponseWriter, r *http.Request) {
 }
 
 func createDatabaseView(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, HTMLCreateDatabaseHeader)
+	fmt.Fprintf(w, getHtmlFileContents("createdatabaseheader"))
 	err := createDatabase()
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
 	} else {
 		fmt.Fprintf(w, "Success!")
 	}
-	fmt.Fprintf(w, HTMLCreateDatabaseFooter)
+	fmt.Fprintf(w, getHtmlFileContents("createdatabasefooter"))
 }
 
 func addSetView(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		fmt.Fprintf(w, HTMLAddSetHeader)
-		fmt.Fprintf(w, HTMLPageHeader)
-		fmt.Fprintf(w, HTMLAddSetFooter)
+		fmt.Fprintf(w, getHtmlFileContents("addset"))
 	} else if r.Method == "POST" {
 		err := r.ParseMultipartForm(1000000)
 		if err != nil {
@@ -223,7 +222,7 @@ func modifyCount(w http.ResponseWriter, r *http.Request) {
 
 func addColorList(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		fmt.Fprintf(w, HTMLSetColorList)
+		fmt.Fprintf(w, getHtmlFileContents("setcolorlist"))
 	} else if r.Method == "POST" {
 		err := r.ParseMultipartForm(1000000)
 		if err != nil {
@@ -257,45 +256,28 @@ func addColorList(w http.ResponseWriter, r *http.Request) {
 }
 
 func cssView(w http.ResponseWriter, r *http.Request) {
-    filename := r.URL.Query().Get("file")
-    cssFile := filesRoot + filename + ".css"
-    http.ServeFile(w, r, cssFile)
+	filename := r.URL.Query().Get("file")
+	cssFile := cssFilesRoot + filename + ".css"
+
+	if _, err := os.Stat(imagePath); err == nil {
+		http.ServeFile(w, r, cssFile)
+	} else {
+		cssFile = cssFileRoot + "empty.css"
+		http.ServeFile(w, r, cssFile)
+	}
 }
 
-func testView(w http.ResponseWriter, r *http.Request) {
-    fmt.Printf("Dir: root")
-    files, err := ioutil.ReadDir("/")
+func getHtmlFileContents(filename string) string {
+    file, err := os.Open(htmlFilesRoot + filename + ".html")
     if err != nil {
         log.Fatal(err)
     }
-    for _, file := range files {
-        fmt.Println(file.Name(), file.IsDir())
-    }
+    defer file.Close()
 
-    fmt.Printf("Dir: %s", localIconStorage)
-    files, err = ioutil.ReadDir(localIconStorage)
-    if err != nil {
-        log.Fatal(err)
-    }
-    for _, file := range files {
-        fmt.Println(file.Name(), file.IsDir())
-    }
-    
-    fmt.Printf("Dir: %s", localSetImageStorage)
-    files, err = ioutil.ReadDir(localSetImageStorage)
-    if err != nil {
-        log.Fatal(err)
-    }
-    for _, file := range files {
-        fmt.Println(file.Name(), file.IsDir())
-    }
-    
-    fmt.Printf("Dir: %s", localPartImageStorage)
-    files, err = ioutil.ReadDir(localPartImageStorage)
-    if err != nil {
-        log.Fatal(err)
-    }
-    for _, file := range files {
-        fmt.Println(file.Name(), file.IsDir())
-    }
+    b, err := ioutil.ReadAll(file)
+    return string(b)
+}
+
+func pingView(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintf(w, "pong")
 }

@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="/style?file=styles">
+    <link rel="stylesheet" href="/style?file=styleaddset">
+    <title>Add set</title>
+  </head>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td><a href="/">Sætliste</a></td>
+          <td><a href="/addset">Tilføj sæt</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <form enctype="multipart/form-data" action="/addset" method="post">
+      <table>
+        <tbody>
+          <tr>
+            <td>Sæt navn eller nummer</td>
+            <td><input type="text" name="setname"></td>
+          </tr>
+          <tr>
+            <td>Sæt beskrivelse</td>
+            <td><input type="text" name="setdescription"></td>
+          </tr>
+          <tr>
+            <td>Sæt billede</td>
+            <td><input type="text" name="setimageurl"></td>
+          </tr>
+          <tr>
+            <td>Inventory XML fra Bricklink fra wanting liste</td>
+            <td><input type="file" name="setfilename"></td>
+          </tr>
+          <tr>
+            <td><input type="submit" value="Tilbage">
+            <td><input type="reset" value="Nulstil"><input type="submit" value="Gem">
+          </tr>
+        </tbody>
+      </table>
+    </form>
+  </body>
+</html>

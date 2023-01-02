@@ -1,0 +1,64 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="/style?file=styles">
+    <link rel="stylesheet" href="/style?file=stylepartlist">
+    <title>Partlist</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+      var setID = %d;
+      function postdata(item){
+      var imageid = item.id
+      var partnumbercolor = imageid.substring(imageid.indexOf('-'));
+      var foundtag = '#found'.concat(partnumbercolor)
+      $.ajax({
+        url: "/modifycount",
+        type: "POST",
+        data: {
+          id: imageid,
+          setid: setID
+        },
+        success : function(data) {
+          $(foundtag).text(data);
+          var reqtag = '#req'.concat(partnumbercolor)
+          var reqcount = $(reqtag).text()
+          if (data === reqcount) {
+            $('#tr'.concat(partnumbercolor)).css('background-color', "#555555");
+            //$('#tr'.concat(partnumbercolor)).hide();
+          } else {
+            $('#tr'.concat(partnumbercolor)).css('background-color', "#ffffff");
+          }
+        },
+      });
+    };
+    </script>
+  </head>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td><a href="/">Sætliste</a></td>
+          <td><a href="/addset">Tilføj sæt</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <form enctype="multipart/form-data" action="/addset" method="post">
+      <table>
+        <colgroup>
+          <col style="background-color:#efefef">
+          <col style="background-color:white">
+          <col style="background-color:#efefef">
+          <col style="background-color:white">
+          <col style="background-color:#efefef">
+          <col style="background-color:white">
+          <col style="background-color:#efefef">
+        </colgroup>
+        <tbody>
+          <tr>
+            <td>Del</td>
+            <td width="15%%">Billede</td>
+            <td>Antal nødvendig</td>
+            <td>Antal fundet</td>
+            <td>Fundet / Fortryd</td>
+            <td>Farve</td>
+            <td>Beskrivelse</td>
+          </tr>

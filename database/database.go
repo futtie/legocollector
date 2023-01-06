@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/futtie/legocollector/structs"
+	"github.com/futtie/LegoCollector/structs"
 
 	_ "github.com/go-sql-driver/mysql"
 )

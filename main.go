@@ -10,7 +10,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/futtie/legocollector/database"
+	"github.com/futtie/LegoCollector/database"
+	"github.com/futtie/LegoCollector/structs"
 
 	"github.com/gorilla/mux"
 )

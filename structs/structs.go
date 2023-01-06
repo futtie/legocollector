@@ -1,4 +1,4 @@
-package main
+package structs
 
 // ColorCatalog is root element of a Bricklink color xml list export
 type ColorCatalog struct {

@@ -8,3 +8,12 @@ h1 {
 td {
     font-size: 36px;
 }
+tr:nth-child(odd) {
+    background-color: #efefef;
+}
+tr:nth-child(even) {
+    background-color: white;
+}
+tr.allpartsfound {
+    background-color: #555555;
+}

@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/futtie/legocollector/database"
+
 	"github.com/gorilla/mux"
 )
 
@@ -19,7 +21,11 @@ const localIconStorage = "/files/buttons/"
 const cssFilesRoot = "/files/css/"
 const htmlFilesRoot = "/files/html/"
 
+var db	 *database.Database 
+
 func main() {
+	db = database.InitDatabase("legouser:legopassword@tcp(dbserver:3306)/legoparts")
+
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", homeView)
 	router.HandleFunc("/addset", addSetView)
@@ -55,7 +61,7 @@ func decodeColors(data []byte) ColorCatalog {
 }
 
 func homeView(w http.ResponseWriter, r *http.Request) {
-	setList, err := getSetList()
+	setList, err := db.getSetList()
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
 		return
@@ -79,12 +85,12 @@ func singleSetView(w http.ResponseWriter, r *http.Request) {
 
 	if id > 0 {
 		fmt.Fprintf(w, getHtmlFileContents("partlistheader"), id)
-		setParts, err := getPartList(id)
+		setParts, err := db.getPartList(id)
 		if err != nil {
 			fmt.Fprintf(w, "Can't find set, %s", err.Error())
 			return
 		}
-		legoColors, err := getLegoColors()
+		legoColors, err := db.getLegoColors()
 		if err != nil {
 			fmt.Fprintf(w, "Can't find legocolors, %s", err.Error())
 		}
@@ -93,8 +99,13 @@ func singleSetView(w http.ResponseWriter, r *http.Request) {
 			if !found {
 				colorName = "ingen"
 			}
+			
+			trclass := "class"
+			if part.RequiredQty == part.FoundQty {
+				trclass = "class=\"allpartsfound\""
+			}
 			//colorName := From(legoColors).Where(func(c LegoColor) bool { return c.Number == part.ColorID }).Select(func(c LegoColor) string { return c.Name }).First()
-			fmt.Fprintf(w, getHtmlFileContents("partlistitem"), part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.RequiredQty, part.Partnumber, part.ColorID, part.FoundQty, part.Partnumber, part.ColorID, part.Partnumber, part.ColorID, colorName, part.Description)
+			fmt.Fprintf(w, getHtmlFileContents("partlistitem"), part.Partnumber, part.ColorID, trclass, part.Partnumber, part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.RequiredQty, part.Partnumber, part.ColorID, part.FoundQty, part.Partnumber, part.ColorID, part.Partnumber, part.ColorID, colorName, part.Description)
 		}
 	}
 }
@@ -137,7 +148,7 @@ func getIcon(w http.ResponseWriter, r *http.Request) {
 
 func createDatabaseView(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, getHtmlFileContents("createdatabaseheader"))
-	err := createDatabase()
+	err := db.createDatabase()
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
 	} else {
@@ -171,7 +182,7 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 		var legoset LegoSet
 		legoset.Name = setName
 		legoset.Description = setDescription
-		setID := saveSet(legoset)
+		setID := db.saveSet(legoset)
 		saveImageByURL(setID, setImageURL)
 
 		// decode file
@@ -191,7 +202,7 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 			legoPart.FoundQty = 0
 			legoParts = append(legoParts, legoPart)
 		}
-		saveParts(legoParts)
+		db.saveParts(legoParts)
 	}
 }
 
@@ -207,7 +218,7 @@ func modifyCount(w http.ResponseWriter, r *http.Request) {
 		direction := subMatches[1]
 		partNumber := subMatches[2]
 		colorID := subMatches[3]
-		foundqty, err := setPartFoundQuantity(setID, partNumber, colorID, direction)
+		foundqty, err := db.setPartFoundQuantity(setID, partNumber, colorID, direction)
 		if err != nil {
 			w.Write([]byte("-1"))
 			return
@@ -249,7 +260,7 @@ func addColorList(w http.ResponseWriter, r *http.Request) {
 			legoColor.Name = item.ColorName
 			legoColors = append(legoColors, legoColor)
 		}
-		saveColors(legoColors)
+		db.saveColors(legoColors)
 		fmt.Fprintf(w, "done")
 	}
 	fmt.Fprintf(w, "something happened...")
@@ -258,13 +269,7 @@ func addColorList(w http.ResponseWriter, r *http.Request) {
 func cssView(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Query().Get("file")
 	cssFile := cssFilesRoot + filename + ".css"
-
-	if _, err := os.Stat(imagePath); err == nil {
-		http.ServeFile(w, r, cssFile)
-	} else {
-		cssFile = cssFileRoot + "empty.css"
-		http.ServeFile(w, r, cssFile)
-	}
+	http.ServeFile(w, r, cssFile)
 }
 
 func getHtmlFileContents(filename string) string {

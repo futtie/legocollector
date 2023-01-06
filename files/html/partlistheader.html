@@ -22,10 +22,10 @@
           var reqtag = '#req'.concat(partnumbercolor)
           var reqcount = $(reqtag).text()
           if (data === reqcount) {
-            $('#tr'.concat(partnumbercolor)).css('background-color', "#555555");
+            $('#tr'.concat(partnumbercolor)).addClass("allpartsfound");
             //$('#tr'.concat(partnumbercolor)).hide();
           } else {
-            $('#tr'.concat(partnumbercolor)).css('background-color', "#ffffff");
+            $('#tr'.concat(partnumbercolor)).removeClass("allpartsfound");
           }
         },
       });
@@ -43,15 +43,6 @@
     </table>
     <form enctype="multipart/form-data" action="/addset" method="post">
       <table>
-        <colgroup>
-          <col style="background-color:#efefef">
-          <col style="background-color:white">
-          <col style="background-color:#efefef">
-          <col style="background-color:white">
-          <col style="background-color:#efefef">
-          <col style="background-color:white">
-          <col style="background-color:#efefef">
-        </colgroup>
         <tbody>
           <tr>
             <td>Del</td>

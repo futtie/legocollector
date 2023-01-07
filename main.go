@@ -235,15 +235,17 @@ func missingListView(w http.ResponseWriter, r *http.Request) {
 	var inventory structs.Inventory
 
 	for _, part := range setParts {
-		var item structs.Item
-		item.ItemType = "P"
-		item.ItemID = part.Partnumber
-		item.Color = part.ColorID
-		item.Maxprice = -1
-		item.MinQty = part.RequiredQty - part.FoundQty
-		item.Condition = "U"
-		item.Notify = "N"
-		inventory.Items = append(inventory.Items, item)
+		if part.FoundQty < part.RequiredQty {
+			var item structs.Item
+			item.ItemType = "P"
+			item.ItemID = part.Partnumber
+			item.Color = part.ColorID
+			item.Maxprice = -1
+			item.MinQty = part.RequiredQty - part.FoundQty
+			item.Condition = "U"
+			item.Notify = "N"
+			inventory.Items = append(inventory.Items, item)
+		}
 	}
 	xmlfile := encodeSet(inventory)
 	xmlfile = strings.Replace(xmlfile, "<Inventory>", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<INVENTORY xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">", -1)

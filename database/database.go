@@ -150,7 +150,7 @@ func (client *Database) GetPartList(setID int) ([]structs.LegoPart, error) {
 		return nil, err
 	}
 	
-	rows, err := client.DB.Query("SELECT partnumber,description,legocolor_id,legoset_id,requiredqty,foundqty,requiredqty=foundqty as lowpri FROM legopart WHERE legoset_id = ? order by color, lowpri;", setID)
+	rows, err := client.DB.Query("SELECT partnumber,description,legocolor_id,legoset_id,requiredqty,foundqty,requiredqty=foundqty as lowpri FROM legopart WHERE legoset_id = ? order by legocolor_id, lowpri;", setID)
 	if err != nil {
 		return nil, err
 	}

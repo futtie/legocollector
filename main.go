@@ -16,15 +16,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const localPartImageStorage = "/files/parts/"
-const localSetImageStorage = "/files/sets/"
-const localIconStorage = "/files/buttons/"
-const cssFilesRoot = "/files/css/"
-const htmlFilesRoot = "/files/html/"
+const localPartImageStorage = "./files/parts/"
+const localSetImageStorage = "./files/sets/"
+const localIconStorage = "./files/buttons/"
+const cssFilesRoot = "./files/css/"
+const htmlFilesRoot = "./files/html/"
 
 var db	 *database.Database 
 
 func main() {
+	//db = database.InitDatabase("legouser:legopassword@tcp(localhost:3306)/legoparts")
 	db = database.InitDatabase("legouser:legopassword@tcp(dbserver:3306)/legoparts")
 
 	router := mux.NewRouter().StrictSlash(true)
@@ -41,8 +42,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
-func decodeSet(data []byte) Inventory {
-	v := Inventory{}
+func decodeSet(data []byte) structs.Inventory {
+	v := structs.Inventory{}
 
 	err := xml.Unmarshal(data, &v)
 	if err != nil {
@@ -51,8 +52,8 @@ func decodeSet(data []byte) Inventory {
 	return v
 }
 
-func decodeColors(data []byte) ColorCatalog {
-	v := ColorCatalog{}
+func decodeColors(data []byte) structs.ColorCatalog {
+	v := structs.ColorCatalog{}
 
 	err := xml.Unmarshal(data, &v)
 	if err != nil {
@@ -62,7 +63,7 @@ func decodeColors(data []byte) ColorCatalog {
 }
 
 func homeView(w http.ResponseWriter, r *http.Request) {
-	setList, err := db.getSetList()
+	setList, err := db.GetSetList()
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
 		return
@@ -86,12 +87,12 @@ func singleSetView(w http.ResponseWriter, r *http.Request) {
 
 	if id > 0 {
 		fmt.Fprintf(w, getHtmlFileContents("partlistheader"), id)
-		setParts, err := db.getPartList(id)
+		setParts, err := db.GetPartList(id)
 		if err != nil {
 			fmt.Fprintf(w, "Can't find set, %s", err.Error())
 			return
 		}
-		legoColors, err := db.getLegoColors()
+		legoColors, err := db.GetLegoColors()
 		if err != nil {
 			fmt.Fprintf(w, "Can't find legocolors, %s", err.Error())
 		}
@@ -106,7 +107,7 @@ func singleSetView(w http.ResponseWriter, r *http.Request) {
 				trclass = "class=\"allpartsfound\""
 			}
 			//colorName := From(legoColors).Where(func(c LegoColor) bool { return c.Number == part.ColorID }).Select(func(c LegoColor) string { return c.Name }).First()
-			fmt.Fprintf(w, getHtmlFileContents("partlistitem"), part.Partnumber, part.ColorID, trclass, part.Partnumber, part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.RequiredQty, part.Partnumber, part.ColorID, part.FoundQty, part.Partnumber, part.ColorID, part.Partnumber, part.ColorID, colorName, part.Description)
+			fmt.Fprintf(w, getHtmlFileContents("partlistitem"), part.Partnumber, part.ColorID, trclass, part.Partnumber, part.Partnumber, part.ColorID, part.Partnumber, part.Partnumber, part.ColorID, part.RequiredQty, part.Partnumber, part.ColorID, part.FoundQty, part.Partnumber, part.ColorID, part.Partnumber, part.ColorID, part.Partnumber, part.ColorID, colorName, part.Description)
 		}
 	}
 }
@@ -149,7 +150,7 @@ func getIcon(w http.ResponseWriter, r *http.Request) {
 
 func createDatabaseView(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, getHtmlFileContents("createdatabaseheader"))
-	err := db.createDatabase()
+	err := db.CreateDatabase()
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
 	} else {
@@ -180,21 +181,21 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 		setDescription := r.FormValue("setdescription")
 		setImageURL := r.FormValue("setimageurl")
 
-		var legoset LegoSet
+		var legoset structs.LegoSet
 		legoset.Name = setName
 		legoset.Description = setDescription
-		setID := db.saveSet(legoset)
+		setID := db.SaveSet(legoset)
 		saveImageByURL(setID, setImageURL)
 
 		// decode file
 		content, err := ioutil.ReadAll(file)
 		inventory := decodeSet(content)
 		// save items
-		var legoParts []LegoPart
+		var legoParts []structs.LegoPart
 		for _, item := range inventory.Items {
 			// retrieve part info: description and image
 			description, _ := getPartImageAndDescription(item.ItemID, item.Color)
-			var legoPart LegoPart
+			var legoPart structs.LegoPart
 			legoPart.Description = description
 			legoPart.ColorID = item.Color
 			legoPart.Partnumber = item.ItemID
@@ -203,7 +204,7 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 			legoPart.FoundQty = 0
 			legoParts = append(legoParts, legoPart)
 		}
-		db.saveParts(legoParts)
+		db.SaveParts(legoParts)
 	}
 }
 
@@ -219,7 +220,7 @@ func modifyCount(w http.ResponseWriter, r *http.Request) {
 		direction := subMatches[1]
 		partNumber := subMatches[2]
 		colorID := subMatches[3]
-		foundqty, err := db.setPartFoundQuantity(setID, partNumber, colorID, direction)
+		foundqty, err := db.SetPartFoundQuantity(setID, partNumber, colorID, direction)
 		if err != nil {
 			w.Write([]byte("-1"))
 			return
@@ -254,14 +255,14 @@ func addColorList(w http.ResponseWriter, r *http.Request) {
 		content, err := ioutil.ReadAll(file)
 		colors := decodeColors(content)
 		// save items
-		var legoColors []LegoColor
+		var legoColors []structs.LegoColor
 		for _, item := range colors.Items {
-			var legoColor LegoColor
+			var legoColor structs.LegoColor
 			legoColor.Number = item.Color
 			legoColor.Name = item.ColorName
 			legoColors = append(legoColors, legoColor)
 		}
-		db.saveColors(legoColors)
+		db.SaveColors(legoColors)
 		fmt.Fprintf(w, "done")
 	}
 	fmt.Fprintf(w, "something happened...")

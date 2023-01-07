@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	maxOpenConnections = 1000
+	maxOpenConnections = 10
 	maxConRetries      = 3  // Number of retries
 	maxConTimeout      = 10 // this is seconds
 )
@@ -24,7 +24,7 @@ type Database struct {
 // Init the config for the connection
 func InitDatabase(connstring string) *Database {
 	return &Database{
-		ConnString: host,
+		ConnString: connstring,
 	}
 }
 
@@ -35,13 +35,12 @@ func (client *Database) ConnectToDatabase(dsn string, maxTries int) error {
 	}
 	con, err := sql.Open("mysql", dsn)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	con.SetMaxOpenConns(maxOpenConnections)
+	con.SetConnMaxLifetime(10*1000000000) // 10 seconds
 	client.DB = con
 	if err := client.Ping(); err != nil {
-		log.Error(err)
 		return client.ConnectToDatabase(dsn, maxTries-1)
 	}
 	return client.Ping()
@@ -66,10 +65,6 @@ func (client *Database) Ping() error {
 // EnsureConnected Ensure we are connected to the database
 func (client *Database) EnsureConnected() error {
 	if !client.IsConnected() {
-		collation := "utf8_general_ci"
-		if client.Collation != "" {
-			collation = client.Collation
-		}
 		return client.ConnectToDatabase(
 			client.ConnString,
 			maxConRetries,
@@ -80,6 +75,9 @@ func (client *Database) EnsureConnected() error {
 
 // CreateDatabase creates the tables for the application
 func (client *Database) CreateDatabase() error {
+	if err := client.EnsureConnected(); err != nil {
+		return err
+	}
 
 	statements := [4]string{
 		`CREATE TABLE IF NOT EXISTS legoset (
@@ -122,17 +120,21 @@ func (client *Database) CreateDatabase() error {
 }
 
 // GetSetList gets the list of sets
-func (client *Database) GetSetList() ([]LegoSet, error) {
-
+func (client *Database) GetSetList() ([]structs.LegoSet, error) {
+	if err := client.EnsureConnected(); err != nil {
+		return nil, err
+	}
+	
 	rows, err := client.DB.Query("SELECT id, name, description from legoset")
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	result := []LegoSet{}
+	result := []structs.LegoSet{}
 
 	for rows.Next() {
-		var ls LegoSet
+		var ls structs.LegoSet
 		err = rows.Scan(&ls.ID, &ls.Name, &ls.Description)
 		if err != nil {
 			return nil, err
@@ -143,17 +145,21 @@ func (client *Database) GetSetList() ([]LegoSet, error) {
 }
 
 // GetPartList gets the list of parts for the set
-func (client *Database) GetPartList(setID int) ([]LegoPart, error) {
+func (client *Database) GetPartList(setID int) ([]structs.LegoPart, error) {
+	if err := client.EnsureConnected(); err != nil {
+		return nil, err
+	}
 	
-	rows, err := client.DB.Query("SELECT partnumber,description,legocolor_id,legoset_id,requiredqty,foundqty,requiredqty=foundqty as lowpri FROM legopart WHERE legoset_id = ? order by lowpri;", setID)
+	rows, err := client.DB.Query("SELECT partnumber,description,legocolor_id,legoset_id,requiredqty,foundqty,requiredqty=foundqty as lowpri FROM legopart WHERE legoset_id = ? order by color, lowpri;", setID)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	result := []LegoPart{}
+	result := []structs.LegoPart{}
 
 	for rows.Next() {
-		var lp LegoPart
+		var lp structs.LegoPart
 		err = rows.Scan(&lp.Partnumber, &lp.Description, &lp.ColorID, &lp.SetID, &lp.RequiredQty, &lp.FoundQty, &lp.LowPriority)
 		if err != nil {
 			return nil, err
@@ -164,7 +170,10 @@ func (client *Database) GetPartList(setID int) ([]LegoPart, error) {
 }
 
 // SaveSet saves the set
-func (client *Database) SaveSet(set LegoSet) int {
+func (client *Database) SaveSet(set structs.LegoSet) int {
+	if err := client.EnsureConnected(); err != nil {
+		panic(err.Error())
+	}
 
 	insert, err := client.DB.Prepare("INSERT INTO legoset(name, description) VALUES (?, ?)")
 	if err != nil {
@@ -174,6 +183,7 @@ func (client *Database) SaveSet(set LegoSet) int {
 	if err != nil {
 		panic(err.Error())
 	}
+
 	id64, err := res.LastInsertId()
 	if err != nil {
 		panic(err.Error())
@@ -182,12 +192,16 @@ func (client *Database) SaveSet(set LegoSet) int {
 }
 
 // SaveParts saves an array of parts
-func (client *Database) SaveParts(parts []LegoPart) {
+func (client *Database) SaveParts(parts []structs.LegoPart) {
+	if err := client.EnsureConnected(); err != nil {
+		panic(err.Error())
+	}
 
 	insert, err := client.DB.Prepare("INSERT INTO legopart(partnumber, description, legocolor_id, legoset_id, requiredqty, foundqty) VALUES (?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		panic(err.Error())
 	}
+	defer insert.Close()
 
 	for _, part := range parts {
 		_, err := insert.Exec(part.Partnumber, part.Description, part.ColorID, part.SetID, part.RequiredQty, 0)
@@ -198,12 +212,16 @@ func (client *Database) SaveParts(parts []LegoPart) {
 }
 
 // UpdatePart updates the part
-func (client *Database) UpdatePart(part LegoPart) {
+func (client *Database) UpdatePart(part structs.LegoPart) {
+	if err := client.EnsureConnected(); err != nil {
+		panic(err.Error())
+	}
 
 	insert, err := client.DB.Prepare("UPDATE legopart SET partnumber=?, description=?, legocolor_id=?, legoset_id=?, requiredqty=?, foundqty=? WHERE id=?")
 	if err != nil {
 		panic(err.Error())
 	}
+	defer insert.Close()
 
 	_, err = insert.Exec(part.Partnumber, part.Description, part.ColorID, part.SetID, part.RequiredQty, part.FoundQty)
 	if err != nil {
@@ -212,10 +230,15 @@ func (client *Database) UpdatePart(part LegoPart) {
 }
 
 func (client *Database) SetPartFoundQuantity(setID, partNumber, colorID, direction string) (int, error) {
+	if err := client.EnsureConnected(); err != nil {
+		return 0, err
+	}
 
 	var statement string
 
-	if direction == "up" {
+	if direction == "up10" {
+		statement = "UPDATE legopart SET foundqty=foundqty+10 WHERE foundqty<requiredqty-10 AND partnumber=? AND legocolor_id=? AND legoset_id=?"
+	} else if direction == "up" {
 		statement = "UPDATE legopart SET foundqty=foundqty+1 WHERE foundqty<requiredqty AND partnumber=? AND legocolor_id=? AND legoset_id=?"
 	} else {
 		statement = "UPDATE legopart SET foundqty=foundqty-1 WHERE foundqty>0 AND partnumber=? AND legocolor_id=? AND legoset_id=?"
@@ -224,11 +247,13 @@ func (client *Database) SetPartFoundQuantity(setID, partNumber, colorID, directi
 	if err != nil {
 		return 0, err
 	}
+	defer update.Close()
 
 	res, err := update.Exec(partNumber, colorID, setID)
 	if err != nil {
 		return 0, err
 	}
+
 	_, err = res.LastInsertId()
 	if err != nil {
 		return 0, err
@@ -239,6 +264,7 @@ func (client *Database) SetPartFoundQuantity(setID, partNumber, colorID, directi
 	if err != nil {
 		return 0, err
 	}
+	defer rows.Close()
 
 	//var requiredqty int
 	var foundqty int
@@ -255,16 +281,20 @@ func (client *Database) SetPartFoundQuantity(setID, partNumber, colorID, directi
 
 // GetLegoColors gets the list of colors
 func (client *Database) GetLegoColors() (map[int]string, error) {
+	if err := client.EnsureConnected(); err != nil {
+		return nil, err
+	}
 
 	rows, err := client.DB.Query("SELECT colornumber, colorname FROM legocolor")
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	result := make(map[int]string)
 
 	for rows.Next() {
-		var lc LegoColor
+		var lc structs.LegoColor
 		err = rows.Scan(&lc.Number, &lc.Name)
 		if err != nil {
 			continue
@@ -275,12 +305,16 @@ func (client *Database) GetLegoColors() (map[int]string, error) {
 }
 
 // SaveColors saves an array of colors
-func (client *Database) SaveColors(colors []LegoColor) {
+func (client *Database) SaveColors(colors []structs.LegoColor) {
+	if err := client.EnsureConnected(); err != nil {
+		panic(err.Error())
+	}
 	
 	insert, err := client.DB.Prepare("INSERT INTO legocolor (colornumber, colorname) VALUES (?, ?)")
 	if err != nil {
 		panic(err.Error())
 	}
+	defer insert.Close()
 
 	for _, color := range colors {
 		_, err := insert.Exec(color.Number, color.Name)

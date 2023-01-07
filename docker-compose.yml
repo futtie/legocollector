@@ -8,7 +8,7 @@ services:
     volumes:
       - /home/mhe/docker/legocollector/files/:/files/
     networks:
-        - bridge 
+        - futtie 
   dbserver:
     container_name: dbserver
     image: mysql:latest
@@ -22,7 +22,6 @@ services:
     volumes:
       - /home/mhe/docker/mysql/data/:/var/lib/mysql/
     networks:
-        - bridge
+        - futtie
 networks:
-    bridge:
-        external: true      
+    futtie:

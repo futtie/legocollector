@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/futtie/LegoCollector/database"
 	"github.com/futtie/LegoCollector/structs"
@@ -31,6 +32,7 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", homeView)
 	router.HandleFunc("/addset", addSetView)
+	router.HandleFunc("/getmissinglist", missingListView)
 	router.HandleFunc("/viewset", singleSetView)
 	router.HandleFunc("/createdatabase", createDatabaseView)
 	router.HandleFunc("/viewimage", viewImage)
@@ -52,6 +54,14 @@ func decodeSet(data []byte) structs.Inventory {
 	return v
 }
 
+func encodeSet(data structs.Inventory) string {
+	b, err := xml.MarshalIndent(data, "", "  ")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+	return string(b)
+}
+
 func decodeColors(data []byte) structs.ColorCatalog {
 	v := structs.ColorCatalog{}
 
@@ -70,7 +80,7 @@ func homeView(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, getHtmlFileContents("setlistheader"))
 	for _, item := range setList {
-		fmt.Fprintf(w, getHtmlFileContents("setlistitem"), item.ID, item.ID, item.Name, item.ID, item.Name, item.Description)
+		fmt.Fprintf(w, getHtmlFileContents("setlistitem"), item.ID, item.ID, item.Name, item.ID, item.Name, item.Description, item.RequiredCount, item.FoundCount, item.ID)
 	}
 	fmt.Fprintf(w, getHtmlFileContents("setlistformfooter"))
 }
@@ -206,6 +216,39 @@ func addSetView(w http.ResponseWriter, r *http.Request) {
 		}
 		db.SaveParts(legoParts)
 	}
+	homeView(w, r)
+}
+
+func missingListView(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	setID := r.FormValue("setid")
+	id, err := strconv.Atoi(setID)
+	if err != nil {
+		fmt.Fprintf(w, "Can't find set, %s", err.Error())
+		return
+	}
+	setParts, err := db.GetPartList(id)
+	if err != nil {
+		fmt.Fprintf(w, "Could not get parts list")
+		return
+	}
+	var inventory structs.Inventory
+
+	for _, part := range setParts {
+		var item structs.Item
+		item.ItemType = "P"
+		item.ItemID = part.Partnumber
+		item.Color = part.ColorID
+		item.Maxprice = -1
+		item.MinQty = part.RequiredQty - part.FoundQty
+		item.Condition = "U"
+		item.Notify = "N"
+		inventory.Items = append(inventory.Items, item)
+	}
+	xmlfile := encodeSet(inventory)
+	xmlfile = strings.Replace(xmlfile, "<Inventory>", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<INVENTORY xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">", -1)
+	xmlfile = strings.Replace(xmlfile, "</Inventory>", "</INVENTORY>", -1)
+	fmt.Fprintf(w, xmlfile)
 }
 
 func modifyCount(w http.ResponseWriter, r *http.Request) {
@@ -265,7 +308,7 @@ func addColorList(w http.ResponseWriter, r *http.Request) {
 		db.SaveColors(legoColors)
 		fmt.Fprintf(w, "done")
 	}
-	fmt.Fprintf(w, "something happened...")
+	homeView(w, r)
 }
 
 func cssView(w http.ResponseWriter, r *http.Request) {

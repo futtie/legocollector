@@ -124,8 +124,7 @@ func (client *Database) GetSetList() ([]structs.LegoSet, error) {
 	if err := client.EnsureConnected(); err != nil {
 		return nil, err
 	}
-	
-	rows, err := client.DB.Query("SELECT id, name, description from legoset")
+        rows, err := client.DB.Query("SELECT ls.id, ls.name, ls.description, lp.req, lp.found FROM legoset ls LEFT JOIN (SELECT * FROM (SELECT legoset_id, SUM(requiredqty) AS req, SUM(foundqty) AS found FROM legopart GROUP BY legoset_id) x) lp ON ls.id = lp.legoset_id")
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +134,7 @@ func (client *Database) GetSetList() ([]structs.LegoSet, error) {
 
 	for rows.Next() {
 		var ls structs.LegoSet
-		err = rows.Scan(&ls.ID, &ls.Name, &ls.Description)
+		err = rows.Scan(&ls.ID, &ls.Name, &ls.Description, &ls.RequiredCount, &ls.FoundCount)
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +149,7 @@ func (client *Database) GetPartList(setID int) ([]structs.LegoPart, error) {
 		return nil, err
 	}
 	
-	rows, err := client.DB.Query("SELECT partnumber,description,legocolor_id,legoset_id,requiredqty,foundqty,requiredqty=foundqty as lowpri FROM legopart WHERE legoset_id = ? order by legocolor_id, lowpri;", setID)
+	rows, err := client.DB.Query("SELECT partnumber,description,legocolor_id,legoset_id,requiredqty,foundqty,requiredqty=foundqty as lowpri FROM legopart WHERE legoset_id = ? order by lowpri, legocolor_id;", setID)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,7 @@ REGISTRY := https://hub.docker.com/repository/docker
 
 REPOSITORY := futtie/legocollector
 PWD := $(shell pwd)
-TAG := 0.4
+TAG := 0.6
 
 build: 
 	docker build --no-cache -t ${REPOSITORY}:local -f Dockerfile .

@@ -18,7 +18,7 @@ type Inventory struct {
 
 // Item is a single item in the Bricklink wanted list
 type Item struct {
-	ItemType  string  `xml:"ITEMTYOE"`
+	ItemType  string  `xml:"ITEMTYPE"`
 	ItemID    string  `xml:"ITEMID"`
 	Color     int     `xml:"COLOR"`
 	Maxprice  float32 `xml:"MAXPRICE"`
@@ -29,9 +29,11 @@ type Item struct {
 
 // LegoSet represents the single set
 type LegoSet struct {
-	ID          int
-	Name        string
-	Description string
+	ID          	int
+	Name        	string
+	Description 	string
+	RequiredCount 	int
+	FoundCount	int
 }
 
 // LegoPart represents the single part
